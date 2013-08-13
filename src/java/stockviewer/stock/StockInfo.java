@@ -1,3 +1,5 @@
+package stockviewer.stock;
+
 import java.util.List;
 
 public class StockInfo {

@@ -1,3 +1,5 @@
+package stockviewer.stock;
+
 public class StockTicker {
 
 	private String symbol;

@@ -1,8 +1,11 @@
+package stockviewer.ui;
+
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -11,6 +14,17 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+
+import stockviewer.controller.Controller;
+import stockviewer.stock.StockDataException;
+import stockviewer.stock.StockDataSource;
+import stockviewer.stock.StockInfo;
+import stockviewer.stock.StockPriceType;
+import stockviewer.ui.custom.InfiniteProgressPanel;
+import stockviewer.ui.custom.StockAutoCompleter;
+import stockviewer.util.ChartUtility;
+import stockviewer.util.DateUtil;
 
 import com.toedter.calendar.JDateChooser;
 
@@ -22,30 +36,34 @@ public class StockViewerView implements View {
 	private static final String ERROR = "ERROR";
 	private ChartUtility chartUtility;
 
-	private ExecutorService executor;
+	private ExecutorService threadPool;
 
-	// TODO don't hang the UI
 	// TODO add color picker
 	// TODO improve layout
 	// TODO bad case handling
 
-	private final JDateChooser fromDateChooser;
-	private final JDateChooser toDateChooser;
-
-	private final JTextField stock1Field;
-	private final JTextField stock2Field;
-	
-	private final JComboBox stockPriceTypeBox;
+	private Controller controller;
+	private JDateChooser fromDateChooser;
+	private JDateChooser toDateChooser;
+	private JTextField stock1Field;
+	private JTextField stock2Field;
+	private JComboBox stockPriceTypeBox;
+	private final JButton createButton;
+	private final InfiniteProgressPanel glassPane;
 
 	public StockViewerView(final Controller controller, StockDataSource ds) {
 
+		this.controller = controller;
+		this.threadPool = Executors.newFixedThreadPool(1);
 		chartUtility = new ChartUtility();
+
+		glassPane = new InfiniteProgressPanel();
 
 		final JFrame frame = new JFrame("Stock Viewer");
 		frame.setLocation(310, 130);
+		frame.setGlassPane(glassPane);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		// create panel to hold all of above
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout());
 
@@ -55,7 +73,6 @@ public class StockViewerView implements View {
 		JLabel from = new JLabel("From:");
 		JLabel to = new JLabel("To:");
 
-		// add objects to panel
 		fromDateChooser = new JDateChooser(JDATECHOOSER_DATE_PATTERN,
 				JDATECHOOSER_MASK_PATTERN, JDATECHOOSER_PLACEHOLDER);
 		toDateChooser = new JDateChooser(JDATECHOOSER_DATE_PATTERN,
@@ -77,33 +94,29 @@ public class StockViewerView implements View {
 		stockPickerPanel.add(stock2Field);
 
 		JPanel controls = new JPanel();
-		JButton createButton = new JButton("Create Plot");
+		createButton = new JButton("Create Plot");
 		stockPriceTypeBox = new JComboBox(StockPriceType.values());
 		createButton.addActionListener(new ActionListener() {
 
+			@Override
 			public void actionPerformed(ActionEvent arg0) {
 
-				if (!isValid())
-					return;
-
-				String tickerSymbol1 = stock1Field.getText();
-				String tickerSymbol2 = stock2Field.getText();
-				try {
-					controller.onCreateChart(fromDateChooser.getDate(),
-							toDateChooser.getDate(), tickerSymbol1,
-							tickerSymbol2);
-				} catch (StockDataException e) {
-					String message = e.getLocalizedMessage()
-							+ ", check ticker validity";
-					JOptionPane.showMessageDialog(null, message, ERROR,
-							JOptionPane.ERROR_MESSAGE);
-				} catch (Exception e) {
-					String message = "Error retrieving stock data";
-					JOptionPane.showMessageDialog(null, message, ERROR,
-							JOptionPane.ERROR_MESSAGE);
-				}
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						createButton.setEnabled(false);
+						glassPane.start();
+						threadPool.execute(new Runnable() {
+							@Override
+							public void run() {
+								performCreateChart();
+							}
+						});
+					}
+				});
 
 			}
+
 		});
 
 		controls.add(stockPriceTypeBox);
@@ -121,26 +134,54 @@ public class StockViewerView implements View {
 
 	}
 
-	private boolean isValid() {
+	private void performCreateChart() {
 
-		if (fromDateChooser.getDate() == null
-				|| toDateChooser.getDate() == null) {
+		Date fromDate = DateUtil.truncate(fromDateChooser.getDate());
+		Date toDate = DateUtil.truncate(toDateChooser.getDate());
+
+		String tickerSymbol1 = stock1Field.getText();
+		String tickerSymbol2 = stock2Field.getText();
+
+		try {
+			if (isValid(fromDate, toDate, tickerSymbol1, tickerSymbol2)) {
+				controller.onCreateChart(fromDateChooser.getDate(),
+						toDateChooser.getDate(), tickerSymbol1, tickerSymbol2);
+			}
+		} catch (StockDataException e) {
+			String message = e.getLocalizedMessage()
+					+ ", check ticker validity";
+			JOptionPane.showMessageDialog(null, message, ERROR,
+					JOptionPane.ERROR_MESSAGE);
+		} catch (Exception e) {
+			String message = "Error creating chart";
+			JOptionPane.showMessageDialog(null, message, ERROR,
+					JOptionPane.ERROR_MESSAGE);
+		} finally {
+			glassPane.stop();
+			createButton.setEnabled(true);
+		}
+
+	}
+
+	private boolean isValid(Date fromDate, Date toDate, String tickerSymbol1,
+			String tickerSymbol2) {
+
+		if (fromDate == null || toDate == null) {
 			String message = "Date fields not filled in";
 			JOptionPane.showMessageDialog(null, message, ERROR,
 					JOptionPane.WARNING_MESSAGE);
 			return false;
 		}
 
-		if (stock1Field.getText() == null || stock1Field.getText().isEmpty()
-				|| stock2Field.getText() == null
-				|| stock2Field.getText().isEmpty()) {
+		if (tickerSymbol1 == null || tickerSymbol1.isEmpty()
+				|| tickerSymbol2 == null || tickerSymbol2.isEmpty()) {
 			String message = "Stock tickers not filled in";
 			JOptionPane.showMessageDialog(null, message, ERROR,
 					JOptionPane.WARNING_MESSAGE);
 			return false;
 		}
 
-		if (!toDateChooser.getDate().after(fromDateChooser.getDate())) {
+		if (!toDate.after(fromDate)) {
 			String message = "To date must be after From date";
 			JOptionPane.showMessageDialog(null, message, ERROR,
 					JOptionPane.WARNING_MESSAGE);
@@ -151,6 +192,7 @@ public class StockViewerView implements View {
 
 	}
 
+	@Override
 	public void onReceivingNewStockInfo(Date from, Date to, StockInfo stock1,
 			StockInfo stock2) {
 

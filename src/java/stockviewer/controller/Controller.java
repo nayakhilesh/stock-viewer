@@ -1,4 +1,9 @@
+package stockviewer.controller;
+
 import java.util.Date;
+
+import stockviewer.stock.StockDataException;
+import stockviewer.ui.View;
 
 public interface Controller {
 

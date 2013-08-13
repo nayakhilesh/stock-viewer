@@ -1,4 +1,13 @@
+package stockviewer;
+
 import javax.swing.SwingUtilities;
+
+import stockviewer.controller.Controller;
+import stockviewer.controller.StockViewerController;
+import stockviewer.stock.StockDataSource;
+import stockviewer.stock.YahooFinanceClient;
+import stockviewer.ui.StockViewerView;
+import stockviewer.ui.View;
 
 public class StockViewer {
 
@@ -9,12 +18,12 @@ public class StockViewer {
 		View view = new StockViewerView(controller, ds);
 
 		controller.addView(view);
-		
+
 		// TODO logging
 		// TODO splash screen
 
 		// YAHOO FINANCE:
-		
+
 		// historical
 		// http://ichart.yahoo.com/table.csv?s=AAPL&a=0&b=1&c=2000&d=0&e=31&f=2010&g=d&ignore=.csv
 
@@ -29,6 +38,7 @@ public class StockViewer {
 	public static void main(String[] args) {
 
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				new StockViewer();
 			}

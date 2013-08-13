@@ -1,3 +1,5 @@
+package stockviewer.stock;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -45,7 +47,9 @@ public class YahooFinanceClient implements StockDataSource {
 		cal = Calendar.getInstance();
 	}
 
-	public List<StockData> getStockData(String tickerSymbol, Date from, Date to) throws StockDataException {
+	@Override
+	public List<StockData> getStockData(String tickerSymbol, Date from, Date to)
+			throws StockDataException {
 
 		cal.setTime(from);
 		int fromMonth = cal.get(Calendar.MONTH);
@@ -66,7 +70,8 @@ public class YahooFinanceClient implements StockDataSource {
 
 		if (Response.Status.NOT_FOUND.equals(Response.Status
 				.fromStatusCode(response.getStatus())))
-			throw new StockDataException("404: Stock " + tickerSymbol + " data not found");
+			throw new StockDataException("404: Stock " + tickerSymbol
+					+ " data not found");
 
 		String responseCsv = response.readEntity(String.class);
 
@@ -108,7 +113,7 @@ public class YahooFinanceClient implements StockDataSource {
 				list.add(stockData);
 
 			} catch (Exception e) {
-				// TODO
+				// TODO logging
 				e.printStackTrace();
 				System.out.println("Exception parsing stock data row:" + row);
 			}
@@ -117,7 +122,9 @@ public class YahooFinanceClient implements StockDataSource {
 		return list;
 	}
 
-	public synchronized List<StockTicker> searchTickers(String query) throws StockDataException {
+	@Override
+	public synchronized List<StockTicker> searchTickers(String query)
+			throws StockDataException {
 
 		Response response = tickerSearchTarget
 				.queryParam("query", query)
@@ -127,7 +134,8 @@ public class YahooFinanceClient implements StockDataSource {
 
 		if (Response.Status.NOT_FOUND.equals(Response.Status
 				.fromStatusCode(response.getStatus())))
-			throw new StockDataException("404: Tickers not found for query:" + query);
+			throw new StockDataException("404: Tickers not found for query:"
+					+ query);
 
 		String responseString = response.readEntity(String.class);
 

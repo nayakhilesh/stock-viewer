@@ -1,3 +1,5 @@
+package stockviewer.ui.custom;
+
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -19,18 +21,24 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 
-// @author Santhosh Kumar T - santhosh@in.fiorano.com
-// @author modified by Akhilesh Nayak - nayakhilesh@gmail.com
+/**
+ * 
+ * @author Santhosh Kumar T - santhosh@in.fiorano.com
+ *         (http://www.jroller.com/santhosh/entry/file_path_autocompletion)
+ * @author modified by Akhilesh Nayak - nayakhilesh@gmail.com
+ * 
+ */
 public abstract class AutoCompleter {
 
 	protected JList list = new JList();
-	private JPopupMenu popup = new JPopupMenu();
 	protected JTextComponent textComp;
+	private JPopupMenu popup = new JPopupMenu();
 	private static final String AUTOCOMPLETER = "AUTOCOMPLETER";
 
 	private String text = "";
 
 	public AutoCompleter(JTextComponent comp) {
+
 		textComp = comp;
 		textComp.putClientProperty(AUTOCOMPLETER, this);
 		JScrollPane scroll = new JScrollPane(list);
@@ -61,14 +69,17 @@ public abstract class AutoCompleter {
 				JComponent.WHEN_FOCUSED);
 
 		popup.addPopupMenuListener(new PopupMenuListener() {
+			@Override
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 			}
 
+			@Override
 			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 				textComp.unregisterKeyboardAction(KeyStroke.getKeyStroke(
 						KeyEvent.VK_ENTER, 0));
 			}
 
+			@Override
 			public void popupMenuCanceled(PopupMenuEvent e) {
 			}
 		});
@@ -79,7 +90,8 @@ public abstract class AutoCompleter {
 
 			@Override
 			public void run() {
-				if (text != null && !text.equals(textComp.getText()) && popup.isVisible()) {
+				if (text != null && !text.equals(textComp.getText())
+						&& popup.isVisible()) {
 					text = textComp.getText();
 					showPopup();
 				}
@@ -88,17 +100,6 @@ public abstract class AutoCompleter {
 		}, 0, 2000);
 
 	}
-
-	static Action acceptAction = new AbstractAction() {
-		public void actionPerformed(ActionEvent e) {
-			JComponent tf = (JComponent) e.getSource();
-			AutoCompleter completer = (AutoCompleter) tf
-					.getClientProperty(AUTOCOMPLETER);
-			completer.popup.setVisible(false);
-			completer.acceptedListItem((String) completer.list
-					.getSelectedValue());
-		}
-	};
 
 	private void showPopup() {
 		popup.setVisible(false);
@@ -125,13 +126,27 @@ public abstract class AutoCompleter {
 		}
 		textComp.requestFocus();
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() {
 				textComp.setCaretPosition(textComp.getText().length());
 			}
 		});
 	}
 
-	static Action showAction = new AbstractAction() {
+	private static Action acceptAction = new AbstractAction() {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			JComponent tf = (JComponent) e.getSource();
+			AutoCompleter completer = (AutoCompleter) tf
+					.getClientProperty(AUTOCOMPLETER);
+			completer.popup.setVisible(false);
+			completer.acceptedListItem((String) completer.list
+					.getSelectedValue());
+		}
+	};
+
+	private static Action showAction = new AbstractAction() {
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			JComponent tf = (JComponent) e.getSource();
 			AutoCompleter completer = (AutoCompleter) tf
@@ -145,7 +160,8 @@ public abstract class AutoCompleter {
 		}
 	};
 
-	static Action upAction = new AbstractAction() {
+	private static Action upAction = new AbstractAction() {
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			JComponent tf = (JComponent) e.getSource();
 			AutoCompleter completer = (AutoCompleter) tf
@@ -157,7 +173,8 @@ public abstract class AutoCompleter {
 		}
 	};
 
-	static Action hidePopupAction = new AbstractAction() {
+	private static Action hidePopupAction = new AbstractAction() {
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			JComponent tf = (JComponent) e.getSource();
 			AutoCompleter completer = (AutoCompleter) tf

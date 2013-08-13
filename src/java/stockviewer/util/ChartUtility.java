@@ -1,3 +1,5 @@
+package stockviewer.util;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.text.DateFormat;
@@ -21,6 +23,10 @@ import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYDataset;
 
+import stockviewer.stock.StockData;
+import stockviewer.stock.StockInfo;
+import stockviewer.stock.StockPriceType;
+
 public class ChartUtility {
 
 	private Calendar cal;
@@ -38,17 +44,21 @@ public class ChartUtility {
 	public JPanel createChart(Date from, Date to, StockInfo stock1,
 			StockInfo stock2, StockPriceType priceType) {
 
-		String chartTitle = df.format(from) + " to " + df.format(to) + " " + priceType;
+		String chartTitle = df.format(from) + " to " + df.format(to) + " "
+				+ priceType;
 		XYDataset dataset1 = createDataset(stock1, priceType);
 		XYDataset dataset2 = createDataset(stock2, priceType);
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(chartTitle,
-				"Date", stock1.getTickerSymbol() + SPACE_DOLLAR_SYMBOL, dataset1, true, true, false);
+				"Date", stock1.getTickerSymbol() + SPACE_DOLLAR_SYMBOL,
+				dataset1, true, true, false);
 
 		XYPlot plot = chart.getXYPlot();
-		NumberAxis axis2 = new NumberAxis(stock2.getTickerSymbol() + SPACE_DOLLAR_SYMBOL);
+		NumberAxis axis2 = new NumberAxis(stock2.getTickerSymbol()
+				+ SPACE_DOLLAR_SYMBOL);
 		Font tickLabelFont = axis2.getTickLabelFont().deriveFont(11.0F);
-		Font labelFont = axis2.getLabelFont().deriveFont(15.0F).deriveFont(Font.BOLD);
+		Font labelFont = axis2.getLabelFont().deriveFont(15.0F)
+				.deriveFont(Font.BOLD);
 		axis2.setTickLabelFont(tickLabelFont);
 		axis2.setLabelFont(labelFont);
 		axis2.setAutoRangeIncludesZero(false);

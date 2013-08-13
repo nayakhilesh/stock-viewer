@@ -1,3 +1,5 @@
+package stockviewer.stock;
+
 public enum StockPriceType {
 
 	OPEN, HIGH, LOW, CLOSE, ADJCLOSE;

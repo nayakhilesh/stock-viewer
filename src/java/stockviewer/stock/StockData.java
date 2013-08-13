@@ -1,3 +1,5 @@
+package stockviewer.stock;
+
 import java.util.Date;
 
 public class StockData {

@@ -1,6 +1,11 @@
+package stockviewer.ui.custom;
+
 import java.util.List;
 
 import javax.swing.text.JTextComponent;
+
+import stockviewer.stock.StockDataSource;
+import stockviewer.stock.StockTicker;
 
 public class StockAutoCompleter extends AutoCompleter {
 
@@ -11,6 +16,7 @@ public class StockAutoCompleter extends AutoCompleter {
 		this.ds = ds;
 	}
 
+	@Override
 	protected boolean updateListData() {
 		String value = textComp.getText();
 		if (value.isEmpty())
@@ -37,6 +43,7 @@ public class StockAutoCompleter extends AutoCompleter {
 		return true;
 	}
 
+	@Override
 	protected void acceptedListItem(String selected) {
 		if (selected != null) {
 			String[] arr = selected.split(",");
