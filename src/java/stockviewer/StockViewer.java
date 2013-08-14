@@ -19,8 +19,6 @@ public class StockViewer {
 
 		controller.addView(view);
 
-		// TODO logging
-
 		// YAHOO FINANCE:
 
 		// historical
