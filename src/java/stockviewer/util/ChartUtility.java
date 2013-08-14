@@ -17,7 +17,6 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
@@ -37,12 +36,9 @@ public class ChartUtility {
 		cal = Calendar.getInstance();
 	}
 
-	// TODO add cursors / tooltips
-	// TODO make pretty
-
-	@SuppressWarnings("deprecation")
 	public JPanel createChart(Date from, Date to, StockInfo stock1,
-			StockInfo stock2, StockPriceType priceType) {
+			StockInfo stock2, Color color1, Color color2,
+			StockPriceType priceType) {
 
 		String chartTitle = df.format(from) + " to " + df.format(to) + " "
 				+ priceType;
@@ -65,21 +61,18 @@ public class ChartUtility {
 		plot.setRangeAxis(1, axis2);
 		plot.setDataset(1, dataset2);
 		plot.mapDatasetToRangeAxis(1, 1);
-		XYItemRenderer renderer = plot.getRenderer();
-		renderer.setToolTipGenerator(StandardXYToolTipGenerator
+
+		StandardXYItemRenderer renderer = new StandardXYItemRenderer();
+		renderer.setSeriesPaint(0, color1);
+		renderer.setBaseShapesVisible(true);
+		renderer.setBaseToolTipGenerator(StandardXYToolTipGenerator
 				.getTimeSeriesInstance());
-		if (renderer instanceof StandardXYItemRenderer) {
-			StandardXYItemRenderer rr = (StandardXYItemRenderer) renderer;
-			// rr.setPlotShapes(true);
-			rr.setPlotImages(true);
-			rr.setShapesFilled(true);
-		}
+		plot.setRenderer(renderer);
 
 		StandardXYItemRenderer renderer2 = new StandardXYItemRenderer();
-		renderer2.setSeriesPaint(0, Color.black);
-		// renderer2.setPlotShapes(true);
-		renderer2.setPlotImages(true);
-		renderer.setToolTipGenerator(StandardXYToolTipGenerator
+		renderer2.setSeriesPaint(0, color2);
+		renderer2.setBaseShapesVisible(true);
+		renderer2.setBaseToolTipGenerator(StandardXYToolTipGenerator
 				.getTimeSeriesInstance());
 		plot.setRenderer(1, renderer2);
 
@@ -93,9 +86,7 @@ public class ChartUtility {
 
 	private XYDataset createDataset(StockInfo stock, StockPriceType priceType) {
 
-		@SuppressWarnings("deprecation")
-		TimeSeries timeSeries = new TimeSeries(stock.getTickerSymbol(),
-				Day.class);
+		TimeSeries timeSeries = new TimeSeries(stock.getTickerSymbol());
 		for (StockData sd : stock.getStockData()) {
 			cal.setTime(sd.getDate());
 			int month = cal.get(Calendar.MONTH);
