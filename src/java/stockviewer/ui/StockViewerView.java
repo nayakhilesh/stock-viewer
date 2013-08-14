@@ -41,9 +41,6 @@ public class StockViewerView implements View {
 
 	private ExecutorService threadPool;
 
-	// TODO improve layout
-	// TODO bad case handling
-
 	private Controller controller;
 	private JDateChooser fromDateChooser;
 	private JDateChooser toDateChooser;
