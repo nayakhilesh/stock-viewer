@@ -20,7 +20,6 @@ public class StockViewer {
 		controller.addView(view);
 
 		// TODO logging
-		// TODO splash screen
 
 		// YAHOO FINANCE:
 
