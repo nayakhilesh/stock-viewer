@@ -1,6 +1,7 @@
 package stockviewer.stock;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -74,10 +75,15 @@ public class YahooFinanceClient implements StockDataSource {
 
 		String responseCsv = response.readEntity(String.class);
 
-		return parseCsv(responseCsv);
+		try {
+			return parseCsv(responseCsv);
+		} catch (Exception e) {
+			throw new StockDataException(
+					"Exception parsing retrieved data for " + tickerSymbol);
+		}
 	}
 
-	private List<StockData> parseCsv(String csv) {
+	private List<StockData> parseCsv(String csv) throws ParseException {
 
 		String data = csv.replace("\r", "");
 		String[] rows = data.split("\n");
@@ -99,23 +105,16 @@ public class YahooFinanceClient implements StockDataSource {
 
 			String[] cols = row.split(",");
 
-			try {
+			StockData stockData = new StockData();
+			stockData.setDate(df.parse(cols[0]));
+			stockData.setOpen(Double.valueOf(cols[1]));
+			stockData.setHigh(Double.valueOf(cols[2]));
+			stockData.setLow(Double.valueOf(cols[3]));
+			stockData.setClose(Double.valueOf(cols[4]));
+			stockData.setVolume(Double.valueOf(cols[5]));
+			stockData.setAdjClose(Double.valueOf(cols[6]));
+			list.add(stockData);
 
-				StockData stockData = new StockData();
-				stockData.setDate(df.parse(cols[0]));
-				stockData.setOpen(Double.valueOf(cols[1]));
-				stockData.setHigh(Double.valueOf(cols[2]));
-				stockData.setLow(Double.valueOf(cols[3]));
-				stockData.setClose(Double.valueOf(cols[4]));
-				stockData.setVolume(Double.valueOf(cols[5]));
-				stockData.setAdjClose(Double.valueOf(cols[6]));
-				list.add(stockData);
-
-			} catch (Exception e) {
-				// TODO logging
-				e.printStackTrace();
-				System.out.println("Exception parsing stock data row:" + row);
-			}
 		}
 
 		return list;
