@@ -1,6 +1,7 @@
 package stockviewer.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Date;
@@ -15,12 +16,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.ws.rs.ProcessingException;
 
 import stockviewer.controller.Controller;
 import stockviewer.stock.StockDataException;
 import stockviewer.stock.StockDataSource;
 import stockviewer.stock.StockInfo;
 import stockviewer.stock.StockPriceType;
+import stockviewer.ui.custom.ColorChooser;
 import stockviewer.ui.custom.InfiniteProgressPanel;
 import stockviewer.ui.custom.StockAutoCompleter;
 import stockviewer.util.ChartUtility;
@@ -38,7 +41,6 @@ public class StockViewerView implements View {
 
 	private ExecutorService threadPool;
 
-	// TODO add color picker
 	// TODO improve layout
 	// TODO bad case handling
 
@@ -48,6 +50,8 @@ public class StockViewerView implements View {
 	private JTextField stock1Field;
 	private JTextField stock2Field;
 	private JComboBox stockPriceTypeBox;
+	private JComboBox colorChooser1;
+	private JComboBox colorChooser2;
 	private final JButton createButton;
 	private final InfiniteProgressPanel glassPane;
 
@@ -85,13 +89,21 @@ public class StockViewerView implements View {
 
 		JPanel stockPickerPanel = new JPanel();
 
-		stock1Field = new JTextField(15);
+		stock1Field = new JTextField(10);
 		new StockAutoCompleter(stock1Field, ds);
 		stockPickerPanel.add(stock1Field);
 
-		stock2Field = new JTextField(15);
+		colorChooser1 = new ColorChooser();
+		colorChooser1.setSelectedItem(Color.BLUE);
+		stockPickerPanel.add(colorChooser1);
+
+		stock2Field = new JTextField(10);
 		new StockAutoCompleter(stock2Field, ds);
 		stockPickerPanel.add(stock2Field);
+
+		colorChooser2 = new ColorChooser();
+		colorChooser2.setSelectedItem(Color.RED);
+		stockPickerPanel.add(colorChooser2);
 
 		JPanel controls = new JPanel();
 		createButton = new JButton("Create Plot");
@@ -109,7 +121,7 @@ public class StockViewerView implements View {
 						threadPool.execute(new Runnable() {
 							@Override
 							public void run() {
-								performCreateChart();
+								generateChart();
 							}
 						});
 					}
@@ -129,12 +141,13 @@ public class StockViewerView implements View {
 		frame.add(mainPanel, BorderLayout.CENTER);
 
 		// Put the frame on the screen
+		frame.setResizable(false);
 		frame.pack();
 		frame.setVisible(true);
 
 	}
 
-	private void performCreateChart() {
+	private void generateChart() {
 
 		Date fromDate = DateUtil.truncate(fromDateChooser.getDate());
 		Date toDate = DateUtil.truncate(toDateChooser.getDate());
@@ -150,6 +163,10 @@ public class StockViewerView implements View {
 		} catch (StockDataException e) {
 			String message = e.getLocalizedMessage()
 					+ ", check ticker validity";
+			JOptionPane.showMessageDialog(null, message, ERROR,
+					JOptionPane.ERROR_MESSAGE);
+		} catch (ProcessingException e) {
+			String message = "Error, check network connectivity";
 			JOptionPane.showMessageDialog(null, message, ERROR,
 					JOptionPane.ERROR_MESSAGE);
 		} catch (Exception e) {
@@ -197,6 +214,8 @@ public class StockViewerView implements View {
 			StockInfo stock2) {
 
 		JPanel chartPanel = chartUtility.createChart(from, to, stock1, stock2,
+				(Color) colorChooser1.getSelectedItem(),
+				(Color) colorChooser2.getSelectedItem(),
 				(StockPriceType) stockPriceTypeBox.getSelectedItem());
 
 		JFrame chartFrame = new JFrame();
