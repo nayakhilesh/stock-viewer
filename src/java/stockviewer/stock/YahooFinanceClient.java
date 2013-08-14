@@ -22,7 +22,6 @@ import org.json.simple.JSONValue;
 
 public class YahooFinanceClient implements StockDataSource {
 
-	// TODO timeout / no internet
 	private WebTarget stockDataTarget;
 	private DateFormat df;
 	private Calendar cal;
