@@ -47,7 +47,7 @@ public class StockViewerView implements View {
 	private static final String JDATECHOOSER_MASK_PATTERN = "##/##/####";
 	private static final char JDATECHOOSER_PLACEHOLDER = '_';
 	private static final String ERROR = "ERROR";
-	private static final int STOCK_FIELD_WIDTH = 11;
+	private static final int STOCK_FIELD_WIDTH = 10;
 	private ChartUtility chartUtility;
 
 	private ExecutorService threadPool;
@@ -169,7 +169,7 @@ public class StockViewerView implements View {
 
 	private void decorateWithPrompt(JTextField textField) {
 
-		TextPrompt tp = new TextPrompt("Enter Ticker Symbol", textField);
+		TextPrompt tp = new TextPrompt("Enter Ticker", textField);
 		tp.changeAlpha(128);
 		tp.changeStyle(Font.ITALIC);
 
