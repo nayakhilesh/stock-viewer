@@ -2,6 +2,9 @@ package stockviewer;
 
 import javax.swing.SwingUtilities;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import stockviewer.controller.Controller;
 import stockviewer.controller.StockViewerController;
 import stockviewer.stock.StockDataSource;
@@ -11,7 +14,12 @@ import stockviewer.ui.View;
 
 public class StockViewer {
 
+	private static final Logger LOG = LoggerFactory
+			.getLogger(StockViewer.class);
+
 	public StockViewer() {
+
+		LOG.info("Application started");
 
 		StockDataSource ds = new YahooFinanceClient();
 		Controller controller = new StockViewerController(ds);

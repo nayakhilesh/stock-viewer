@@ -2,6 +2,7 @@ package stockviewer.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Date;
@@ -26,6 +27,7 @@ import stockviewer.stock.StockPriceType;
 import stockviewer.ui.custom.ColorChooser;
 import stockviewer.ui.custom.InfiniteProgressPanel;
 import stockviewer.ui.custom.StockAutoCompleter;
+import stockviewer.ui.custom.TextPrompt;
 import stockviewer.util.ChartUtility;
 import stockviewer.util.DateUtil;
 
@@ -37,6 +39,7 @@ public class StockViewerView implements View {
 	private static final String JDATECHOOSER_MASK_PATTERN = "##/##/####";
 	private static final char JDATECHOOSER_PLACEHOLDER = '_';
 	private static final String ERROR = "ERROR";
+	private static final int STOCK_FIELD_WIDTH = 11;
 	private ChartUtility chartUtility;
 
 	private ExecutorService threadPool;
@@ -86,16 +89,18 @@ public class StockViewerView implements View {
 
 		JPanel stockPickerPanel = new JPanel();
 
-		stock1Field = new JTextField(10);
+		stock1Field = new JTextField(STOCK_FIELD_WIDTH);
 		new StockAutoCompleter(stock1Field, ds);
+		decorateWithPrompt(stock1Field);
 		stockPickerPanel.add(stock1Field);
 
 		colorChooser1 = new ColorChooser();
 		colorChooser1.setSelectedItem(Color.BLUE);
 		stockPickerPanel.add(colorChooser1);
 
-		stock2Field = new JTextField(10);
+		stock2Field = new JTextField(STOCK_FIELD_WIDTH);
 		new StockAutoCompleter(stock2Field, ds);
+		decorateWithPrompt(stock2Field);
 		stockPickerPanel.add(stock2Field);
 
 		colorChooser2 = new ColorChooser();
@@ -144,6 +149,14 @@ public class StockViewerView implements View {
 
 	}
 
+	private void decorateWithPrompt(JTextField textField) {
+
+		TextPrompt tp = new TextPrompt("Enter Ticker Symbol", textField);
+		tp.changeAlpha(128);
+		tp.changeStyle(Font.ITALIC);
+
+	}
+
 	private void generateChart() {
 
 		Date fromDate = DateUtil.truncate(fromDateChooser.getDate());
@@ -154,8 +167,8 @@ public class StockViewerView implements View {
 
 		try {
 			if (isValid(fromDate, toDate, tickerSymbol1, tickerSymbol2)) {
-				controller.onCreateChart(fromDateChooser.getDate(),
-						toDateChooser.getDate(), tickerSymbol1, tickerSymbol2);
+				controller.onCreateChart(fromDate, toDate, tickerSymbol1,
+						tickerSymbol2);
 			}
 		} catch (StockDataException e) {
 			String message = e.getLocalizedMessage()
@@ -180,25 +193,43 @@ public class StockViewerView implements View {
 	private boolean isValid(Date fromDate, Date toDate, String tickerSymbol1,
 			String tickerSymbol2) {
 
-		if (fromDate == null || toDate == null) {
-			String message = "Date fields not filled in";
+		if (fromDate == null) {
+			String message = "Invalid From Date";
 			JOptionPane.showMessageDialog(null, message, ERROR,
 					JOptionPane.WARNING_MESSAGE);
+			fromDateChooser.grabFocus();
 			return false;
 		}
 
-		if (tickerSymbol1 == null || tickerSymbol1.isEmpty()
-				|| tickerSymbol2 == null || tickerSymbol2.isEmpty()) {
-			String message = "Stock tickers not filled in";
+		if (toDate == null) {
+			String message = "Invalid To Date";
 			JOptionPane.showMessageDialog(null, message, ERROR,
 					JOptionPane.WARNING_MESSAGE);
+			toDateChooser.grabFocus();
 			return false;
 		}
 
 		if (!toDate.after(fromDate)) {
-			String message = "To date must be after From date";
+			String message = "To Date must be after From Date";
 			JOptionPane.showMessageDialog(null, message, ERROR,
 					JOptionPane.WARNING_MESSAGE);
+			toDateChooser.grabFocus();
+			return false;
+		}
+
+		if (tickerSymbol1 == null || tickerSymbol1.isEmpty()) {
+			String message = "Stock ticker not filled in";
+			JOptionPane.showMessageDialog(null, message, ERROR,
+					JOptionPane.WARNING_MESSAGE);
+			stock1Field.grabFocus();
+			return false;
+		}
+
+		if (tickerSymbol2 == null || tickerSymbol2.isEmpty()) {
+			String message = "Stock ticker not filled in";
+			JOptionPane.showMessageDialog(null, message, ERROR,
+					JOptionPane.WARNING_MESSAGE);
+			stock2Field.grabFocus();
 			return false;
 		}
 
