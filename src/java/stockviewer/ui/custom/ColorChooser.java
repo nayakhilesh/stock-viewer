@@ -11,6 +11,11 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 
+/**
+ * 
+ * @author Akhilesh Nayak - nayakhilesh@gmail.com
+ *
+ */
 public class ColorChooser extends JComboBox {
 
 	private final static Color[] COLORS = { Color.BLACK, Color.BLUE,
