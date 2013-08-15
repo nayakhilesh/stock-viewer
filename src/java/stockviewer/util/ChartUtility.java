@@ -21,6 +21,8 @@ import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 import org.jfree.data.xy.XYDataset;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import stockviewer.stock.StockData;
 import stockviewer.stock.StockInfo;
@@ -28,9 +30,13 @@ import stockviewer.stock.StockPriceType;
 
 public class ChartUtility {
 
+	private static final Logger LOG = LoggerFactory
+			.getLogger(ChartUtility.class);
+
 	private Calendar cal;
 	private final DateFormat df = new SimpleDateFormat("MM-dd-yyyy");
-	private static final String SPACE_DOLLAR_SYMBOL = " ($)";
+	private static final String RANGE_AXIS_SUFFIX = " ($)";
+	private static final String DOMAIN_AXIS_TITLE = "Date";
 
 	public ChartUtility() {
 		cal = Calendar.getInstance();
@@ -40,18 +46,22 @@ public class ChartUtility {
 			StockInfo stock2, Color color1, Color color2,
 			StockPriceType priceType) {
 
+		LOG.info("Generating chart for tickers:" + stock1.getTickerSymbol()
+				+ " & " + stock2.getTickerSymbol());
+
 		String chartTitle = df.format(from) + " to " + df.format(to) + " "
 				+ priceType;
 		XYDataset dataset1 = createDataset(stock1, priceType);
 		XYDataset dataset2 = createDataset(stock2, priceType);
 
 		JFreeChart chart = ChartFactory.createTimeSeriesChart(chartTitle,
-				"Date", stock1.getTickerSymbol() + SPACE_DOLLAR_SYMBOL,
-				dataset1, true, true, false);
+				DOMAIN_AXIS_TITLE,
+				stock1.getTickerSymbol() + RANGE_AXIS_SUFFIX, dataset1, true,
+				true, false);
 
 		XYPlot plot = chart.getXYPlot();
 		NumberAxis axis2 = new NumberAxis(stock2.getTickerSymbol()
-				+ SPACE_DOLLAR_SYMBOL);
+				+ RANGE_AXIS_SUFFIX);
 		Font tickLabelFont = axis2.getTickLabelFont().deriveFont(11.0F);
 		Font labelFont = axis2.getLabelFont().deriveFont(15.0F)
 				.deriveFont(Font.BOLD);

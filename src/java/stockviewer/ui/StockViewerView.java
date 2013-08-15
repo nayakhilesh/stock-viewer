@@ -19,6 +19,9 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.ws.rs.ProcessingException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import stockviewer.controller.Controller;
 import stockviewer.stock.StockDataException;
 import stockviewer.stock.StockDataSource;
@@ -34,6 +37,9 @@ import stockviewer.util.DateUtil;
 import com.toedter.calendar.JDateChooser;
 
 public class StockViewerView implements View {
+
+	private static final Logger LOG = LoggerFactory
+			.getLogger(StockViewerView.class);
 
 	private static final String JDATECHOOSER_DATE_PATTERN = "MM/dd/yyyy";
 	private static final String JDATECHOOSER_MASK_PATTERN = "##/##/####";
@@ -56,6 +62,8 @@ public class StockViewerView implements View {
 	private final InfiniteProgressPanel glassPane;
 
 	public StockViewerView(final Controller controller, StockDataSource ds) {
+
+		LOG.info("Initializing GUI");
 
 		this.controller = controller;
 		this.threadPool = Executors.newFixedThreadPool(1);
@@ -147,6 +155,8 @@ public class StockViewerView implements View {
 		frame.pack();
 		frame.setVisible(true);
 
+		LOG.info("GUI initialization complete");
+
 	}
 
 	private void decorateWithPrompt(JTextField textField) {
@@ -177,10 +187,12 @@ public class StockViewerView implements View {
 					JOptionPane.ERROR_MESSAGE);
 		} catch (ProcessingException e) {
 			String message = "Error, check network connectivity";
+			LOG.error(message, e);
 			JOptionPane.showMessageDialog(null, message, ERROR,
 					JOptionPane.ERROR_MESSAGE);
 		} catch (Exception e) {
 			String message = "Error creating chart";
+			LOG.error(message, e);
 			JOptionPane.showMessageDialog(null, message, ERROR,
 					JOptionPane.ERROR_MESSAGE);
 		} finally {
@@ -240,6 +252,9 @@ public class StockViewerView implements View {
 	@Override
 	public void onReceivingNewStockInfo(Date from, Date to, StockInfo stock1,
 			StockInfo stock2) {
+
+		LOG.info("Received stock info for tickers:" + stock1.getTickerSymbol()
+				+ " & " + stock2.getTickerSymbol());
 
 		JPanel chartPanel = chartUtility.createChart(from, to, stock1, stock2,
 				(Color) colorChooser1.getSelectedItem(),

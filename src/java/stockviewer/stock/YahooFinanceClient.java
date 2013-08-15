@@ -1,7 +1,6 @@
 package stockviewer.stock;
 
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -20,8 +19,13 @@ import javax.ws.rs.core.Response;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class YahooFinanceClient implements StockDataSource {
+
+	private static final Logger LOG = LoggerFactory
+			.getLogger(YahooFinanceClient.class);
 
 	private WebTarget stockDataTarget;
 	private DateFormat df;
@@ -51,6 +55,9 @@ public class YahooFinanceClient implements StockDataSource {
 	public List<StockData> getStockData(String tickerSymbol, Date from, Date to)
 			throws StockDataException {
 
+		LOG.info("Getting data for ticker:" + tickerSymbol + ", from:"
+				+ df.format(from) + ", to:" + df.format(to));
+
 		cal.setTime(from);
 		int fromMonth = cal.get(Calendar.MONTH);
 		int fromDay = cal.get(Calendar.DAY_OF_MONTH);
@@ -69,21 +76,25 @@ public class YahooFinanceClient implements StockDataSource {
 				.request(MediaType.TEXT_PLAIN_TYPE).get();
 
 		if (Response.Status.NOT_FOUND.equals(Response.Status
-				.fromStatusCode(response.getStatus())))
-			throw new StockDataException("404: Stock " + tickerSymbol
-					+ " data not found");
+				.fromStatusCode(response.getStatus()))) {
+			String message = "404: Stock " + tickerSymbol + " data not found";
+			LOG.error(message);
+			throw new StockDataException(message);
+		}
 
 		String responseCsv = response.readEntity(String.class);
 
 		try {
 			return parseCsv(responseCsv);
 		} catch (Exception e) {
-			throw new StockDataException(
-					"Exception parsing retrieved data for " + tickerSymbol);
+			String message = "Exception parsing retrieved data for "
+					+ tickerSymbol;
+			LOG.error(message, e);
+			throw new StockDataException(message);
 		}
 	}
 
-	private List<StockData> parseCsv(String csv) throws ParseException {
+	private List<StockData> parseCsv(String csv) throws StockDataException {
 
 		String data = csv.replace("\r", "");
 		String[] rows = data.split("\n");
@@ -105,15 +116,23 @@ public class YahooFinanceClient implements StockDataSource {
 
 			String[] cols = row.split(",");
 
-			StockData stockData = new StockData();
-			stockData.setDate(df.parse(cols[0]));
-			stockData.setOpen(Double.valueOf(cols[1]));
-			stockData.setHigh(Double.valueOf(cols[2]));
-			stockData.setLow(Double.valueOf(cols[3]));
-			stockData.setClose(Double.valueOf(cols[4]));
-			stockData.setVolume(Double.valueOf(cols[5]));
-			stockData.setAdjClose(Double.valueOf(cols[6]));
-			list.add(stockData);
+			try {
+
+				StockData stockData = new StockData();
+				stockData.setDate(df.parse(cols[0]));
+				stockData.setOpen(Double.valueOf(cols[1]));
+				stockData.setHigh(Double.valueOf(cols[2]));
+				stockData.setLow(Double.valueOf(cols[3]));
+				stockData.setClose(Double.valueOf(cols[4]));
+				stockData.setVolume(Double.valueOf(cols[5]));
+				stockData.setAdjClose(Double.valueOf(cols[6]));
+				list.add(stockData);
+
+			} catch (Exception e) {
+				String message = "Exception parsing stock data row:" + row;
+				LOG.error(message, e);
+				throw new StockDataException(message);
+			}
 
 		}
 
@@ -131,18 +150,27 @@ public class YahooFinanceClient implements StockDataSource {
 				.request(MediaType.APPLICATION_JSON).get();
 
 		if (Response.Status.NOT_FOUND.equals(Response.Status
-				.fromStatusCode(response.getStatus())))
-			throw new StockDataException("404: Tickers not found for query:"
-					+ query);
+				.fromStatusCode(response.getStatus()))) {
+			String message = "404: Tickers not found for query:" + query;
+			LOG.error(message);
+			throw new StockDataException(message);
+		}
 
 		String responseString = response.readEntity(String.class);
 
-		Pattern pattern = Pattern
-				.compile("YAHOO.Finance.SymbolSuggest.ssCallback\\((.*)\\)");
-		Matcher matcher = pattern.matcher(responseString);
-		if (matcher.find()) {
-			String responseJson = matcher.group(1);
-			return parseJson(responseJson);
+		try {
+			Pattern pattern = Pattern
+					.compile("YAHOO.Finance.SymbolSuggest.ssCallback\\((.*)\\)");
+			Matcher matcher = pattern.matcher(responseString);
+			if (matcher.find()) {
+				String responseJson = matcher.group(1);
+				return parseJson(responseJson);
+			}
+		} catch (Exception e) {
+			String message = "Exception parsing response json when searching for tickers with query:"
+					+ query;
+			LOG.error(message, e);
+			throw new StockDataException(message);
 		}
 		return null;
 	}
