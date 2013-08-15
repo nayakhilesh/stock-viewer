@@ -5,6 +5,8 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -75,6 +77,12 @@ public class StockViewerView implements View {
 		frame.setLocation(310, 130);
 		frame.setGlassPane(glassPane);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent we) {
+				LOG.info("Application exiting...");
+			}
+		});
 
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout());
