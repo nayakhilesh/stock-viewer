@@ -55,8 +55,8 @@ public class YahooFinanceClient implements StockDataSource {
 	public List<StockData> getStockData(String tickerSymbol, Date from, Date to)
 			throws StockDataException {
 
-		LOG.info("Getting data for ticker:" + tickerSymbol + ", from:"
-				+ df.format(from) + ", to:" + df.format(to));
+		LOG.info("Getting data for ticker:" + tickerSymbol + " from:"
+				+ df.format(from) + " to:" + df.format(to));
 
 		cal.setTime(from);
 		int fromMonth = cal.get(Calendar.MONTH);

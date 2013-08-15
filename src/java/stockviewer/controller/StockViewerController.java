@@ -52,7 +52,6 @@ public class StockViewerController implements Controller {
 					data1), new StockInfo(tickerSymbol2, data2));
 		}
 
-		LOG.info("Done updating registered Views");
 	}
 
 }
