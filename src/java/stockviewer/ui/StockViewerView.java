@@ -88,7 +88,6 @@ public class StockViewerView implements View {
 		mainPanel.setLayout(new BorderLayout());
 
 		JPanel dateRangeSelectionPanel = new JPanel();
-		// dateRangeSelectionPanel.setLayout(new GridLayout(1, 4, 4, 4));
 
 		JLabel from = new JLabel("From:");
 		JLabel to = new JLabel("To:");
@@ -131,17 +130,12 @@ public class StockViewerView implements View {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 
-				SwingUtilities.invokeLater(new Runnable() {
+				createButton.setEnabled(false);
+				glassPane.start();
+				threadPool.execute(new Runnable() {
 					@Override
 					public void run() {
-						createButton.setEnabled(false);
-						glassPane.start();
-						threadPool.execute(new Runnable() {
-							@Override
-							public void run() {
-								generateChart();
-							}
-						});
+						generateChart();
 					}
 				});
 
@@ -189,23 +183,43 @@ public class StockViewerView implements View {
 						tickerSymbol2);
 			}
 		} catch (StockDataException e) {
-			String message = e.getLocalizedMessage()
+			final String message = e.getLocalizedMessage()
 					+ ", check ticker validity";
-			JOptionPane.showMessageDialog(null, message, ERROR,
-					JOptionPane.ERROR_MESSAGE);
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					JOptionPane.showMessageDialog(null, message, ERROR,
+							JOptionPane.ERROR_MESSAGE);
+				}
+			});
 		} catch (ProcessingException e) {
-			String message = "Error, check network connectivity";
+			final String message = "Error, check network connectivity";
 			LOG.error(message, e);
-			JOptionPane.showMessageDialog(null, message, ERROR,
-					JOptionPane.ERROR_MESSAGE);
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					JOptionPane.showMessageDialog(null, message, ERROR,
+							JOptionPane.ERROR_MESSAGE);
+				}
+			});
 		} catch (Exception e) {
-			String message = "Error creating chart";
+			final String message = "Error creating chart";
 			LOG.error(message, e);
-			JOptionPane.showMessageDialog(null, message, ERROR,
-					JOptionPane.ERROR_MESSAGE);
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					JOptionPane.showMessageDialog(null, message, ERROR,
+							JOptionPane.ERROR_MESSAGE);
+				}
+			});
 		} finally {
-			glassPane.stop();
-			createButton.setEnabled(true);
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					glassPane.stop();
+					createButton.setEnabled(true);
+				}
+			});
 		}
 
 	}
@@ -214,42 +228,67 @@ public class StockViewerView implements View {
 			String tickerSymbol2) {
 
 		if (fromDate == null) {
-			String message = "Invalid From Date";
-			JOptionPane.showMessageDialog(null, message, ERROR,
-					JOptionPane.WARNING_MESSAGE);
-			fromDateChooser.grabFocus();
+			final String message = "Invalid From Date";
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					JOptionPane.showMessageDialog(null, message, ERROR,
+							JOptionPane.WARNING_MESSAGE);
+					fromDateChooser.grabFocus();
+				}
+			});
 			return false;
 		}
 
 		if (toDate == null) {
-			String message = "Invalid To Date";
-			JOptionPane.showMessageDialog(null, message, ERROR,
-					JOptionPane.WARNING_MESSAGE);
-			toDateChooser.grabFocus();
+			final String message = "Invalid To Date";
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					JOptionPane.showMessageDialog(null, message, ERROR,
+							JOptionPane.WARNING_MESSAGE);
+					toDateChooser.grabFocus();
+				}
+			});
 			return false;
 		}
 
 		if (!toDate.after(fromDate)) {
-			String message = "To Date must be after From Date";
-			JOptionPane.showMessageDialog(null, message, ERROR,
-					JOptionPane.WARNING_MESSAGE);
-			toDateChooser.grabFocus();
+			final String message = "To Date must be after From Date";
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					JOptionPane.showMessageDialog(null, message, ERROR,
+							JOptionPane.WARNING_MESSAGE);
+					toDateChooser.grabFocus();
+				}
+			});
 			return false;
 		}
 
 		if (tickerSymbol1 == null || tickerSymbol1.isEmpty()) {
-			String message = "Stock ticker not filled in";
-			JOptionPane.showMessageDialog(null, message, ERROR,
-					JOptionPane.WARNING_MESSAGE);
-			stock1Field.grabFocus();
+			final String message = "Stock ticker not filled in";
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					JOptionPane.showMessageDialog(null, message, ERROR,
+							JOptionPane.WARNING_MESSAGE);
+					stock1Field.grabFocus();
+				}
+			});
 			return false;
 		}
 
 		if (tickerSymbol2 == null || tickerSymbol2.isEmpty()) {
-			String message = "Stock ticker not filled in";
-			JOptionPane.showMessageDialog(null, message, ERROR,
-					JOptionPane.WARNING_MESSAGE);
-			stock2Field.grabFocus();
+			final String message = "Stock ticker not filled in";
+			SwingUtilities.invokeLater(new Runnable() {
+				@Override
+				public void run() {
+					JOptionPane.showMessageDialog(null, message, ERROR,
+							JOptionPane.WARNING_MESSAGE);
+					stock2Field.grabFocus();
+				}
+			});
 			return false;
 		}
 
@@ -264,15 +303,20 @@ public class StockViewerView implements View {
 		LOG.info("Received stock info for tickers:" + stock1.getTickerSymbol()
 				+ " & " + stock2.getTickerSymbol());
 
-		JPanel chartPanel = chartUtility.createChart(from, to, stock1, stock2,
-				(Color) colorChooser1.getSelectedItem(),
+		final JPanel chartPanel = chartUtility.createChart(from, to, stock1,
+				stock2, (Color) colorChooser1.getSelectedItem(),
 				(Color) colorChooser2.getSelectedItem(),
 				(StockPriceType) stockPriceTypeBox.getSelectedItem());
 
-		JFrame chartFrame = new JFrame();
-		chartFrame.add(chartPanel);
-		chartFrame.pack();
-		chartFrame.setVisible(true);
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				JFrame chartFrame = new JFrame();
+				chartFrame.add(chartPanel);
+				chartFrame.pack();
+				chartFrame.setVisible(true);
+			}
+		});
 
 	}
 
