@@ -2,40 +2,50 @@ package stockviewer.ui.custom;
 
 import java.util.List;
 
-import javax.swing.text.JTextComponent;
+import javax.swing.JTextField;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import stockviewer.stock.StockDataSource;
 import stockviewer.stock.StockTicker;
 
 public class StockAutoCompleter extends AutoCompleter {
 
+	private static final Logger LOG = LoggerFactory
+			.getLogger(StockAutoCompleter.class);
+
 	private StockDataSource ds;
 
-	public StockAutoCompleter(JTextComponent comp, StockDataSource ds) {
-		super(comp);
+	public StockAutoCompleter(JTextField field, StockDataSource ds) {
+		super(field);
 		this.ds = ds;
 	}
 
 	@Override
 	protected boolean updateListData() {
-		String value = textComp.getText();
+		String value = textField.getText();
 		if (value.isEmpty())
 			return false;
 
+		long start, end;
 		List<StockTicker> tickers;
 		try {
+			start = System.nanoTime();
 			tickers = ds.searchTickers(value);
+			end = System.nanoTime();
+			LOG.debug("Ticker search time=" + ((end - start) / 1000000.) + "ms");
 		} catch (Exception e) {
 			return false;
 		}
 		if (tickers == null || tickers.isEmpty())
 			return false;
 
-		String[] arr = new String[tickers.size()];
+		StockTicker[] arr = new StockTicker[tickers.size()];
 
 		int i = 0;
 		for (StockTicker ticker : tickers) {
-			arr[i] = ticker.toString();
+			arr[i] = ticker;
 			i++;
 		}
 
@@ -44,14 +54,10 @@ public class StockAutoCompleter extends AutoCompleter {
 	}
 
 	@Override
-	protected void acceptedListItem(String selected) {
+	protected void selectedListItem(Object selected) {
 		if (selected != null) {
-			String[] arr = selected.split(",");
-			if (arr != null && arr.length > 0) {
-				textComp.setText(arr[0]);
-			} else {
-				textComp.setText(selected);
-			}
+			StockTicker selectedTicker = (StockTicker) selected;
+			textField.setText(selectedTicker.getSymbol());
 		}
 	}
 }
