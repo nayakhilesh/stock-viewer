@@ -36,6 +36,7 @@ public class StockAutoCompleter extends AutoCompleter {
 			end = System.nanoTime();
 			LOG.debug("Ticker search time=" + ((end - start) / 1000000.) + "ms");
 		} catch (Exception e) {
+			LOG.error("Exception searching for tickers with query:" + value, e);
 			return false;
 		}
 		if (tickers == null || tickers.isEmpty())
