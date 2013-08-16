@@ -40,7 +40,7 @@ public abstract class AutoCompleter {
 
 	private volatile boolean currentlyActive = false;
 	// the completer is activated when you
-	// hit the down arrow in the text field
+	// hit the down arrow or enter button in the text field
 
 	public AutoCompleter(JTextField field) {
 
@@ -62,6 +62,8 @@ public abstract class AutoCompleter {
 		textField.getActionMap().put(NEXT_ELEMENT, downAction);
 		textField.getInputMap().put(
 				KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), NEXT_ELEMENT);
+		textField.getInputMap().put(
+				KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), NEXT_ELEMENT);
 
 		textField.getActionMap().put(PREVIOUS_ELEMENT, upAction);
 		textField.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0),
@@ -73,6 +75,7 @@ public abstract class AutoCompleter {
 
 		textField.getActionMap().put(SELECT_ELEMENT, selectAction);
 
+		// to hide the popup on tabs
 		textField.addFocusListener(new FocusListener() {
 
 			@Override
@@ -92,13 +95,18 @@ public abstract class AutoCompleter {
 		popup.addPopupMenuListener(new PopupMenuListener() {
 			@Override
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+				currentlyActive = true;
+				textField.getInputMap().put(
+						KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+						SELECT_ELEMENT);
 			}
 
 			@Override
 			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 				currentlyActive = false;
-				textField.getInputMap().remove(
-						KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
+				textField.getInputMap().put(
+						KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
+						NEXT_ELEMENT);
 			}
 
 			@Override
@@ -132,9 +140,7 @@ public abstract class AutoCompleter {
 	private void showPopup() {
 		if (textField.isEnabled() && updateListData()
 				&& list.getModel().getSize() != 0) {
-			textField.getInputMap().put(
-					KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
-					SELECT_ELEMENT);
+
 			int size = list.getModel().getSize();
 			list.setVisibleRowCount(size < 10 ? size : 10);
 
@@ -171,7 +177,6 @@ public abstract class AutoCompleter {
 			AutoCompleter completer = (AutoCompleter) tf
 					.getClientProperty(AUTOCOMPLETER);
 			if (tf.isEnabled()) {
-				completer.currentlyActive = true;
 				if (completer.popup.isVisible())
 					completer.selectNextPossibleValue();
 				else
