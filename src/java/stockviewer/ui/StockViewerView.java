@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -183,35 +184,17 @@ public class StockViewerView implements View {
 						tickerSymbol2);
 			}
 		} catch (StockDataException e) {
-			final String message = e.getLocalizedMessage()
+			String message = e.getLocalizedMessage()
 					+ ", check ticker validity";
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					JOptionPane.showMessageDialog(null, message, ERROR,
-							JOptionPane.ERROR_MESSAGE);
-				}
-			});
+			errorMessagePopup(message, JOptionPane.ERROR_MESSAGE, null);
 		} catch (ProcessingException e) {
-			final String message = "Error, check network connectivity";
+			String message = "Error, check network connectivity";
 			LOG.error(message, e);
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					JOptionPane.showMessageDialog(null, message, ERROR,
-							JOptionPane.ERROR_MESSAGE);
-				}
-			});
+			errorMessagePopup(message, JOptionPane.ERROR_MESSAGE, null);
 		} catch (Exception e) {
-			final String message = "Error creating chart";
+			String message = "Error creating chart";
 			LOG.error(message, e);
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					JOptionPane.showMessageDialog(null, message, ERROR,
-							JOptionPane.ERROR_MESSAGE);
-				}
-			});
+			errorMessagePopup(message, JOptionPane.ERROR_MESSAGE, null);
 		} finally {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
@@ -228,72 +211,53 @@ public class StockViewerView implements View {
 			String tickerSymbol2) {
 
 		if (fromDate == null) {
-			final String message = "Invalid From Date";
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					JOptionPane.showMessageDialog(null, message, ERROR,
-							JOptionPane.WARNING_MESSAGE);
-					fromDateChooser.grabFocus();
-				}
-			});
+			String message = "Invalid From Date";
+			errorMessagePopup(message, JOptionPane.WARNING_MESSAGE,
+					fromDateChooser);
 			return false;
 		}
 
 		if (toDate == null) {
-			final String message = "Invalid To Date";
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					JOptionPane.showMessageDialog(null, message, ERROR,
-							JOptionPane.WARNING_MESSAGE);
-					toDateChooser.grabFocus();
-				}
-			});
+			String message = "Invalid To Date";
+			errorMessagePopup(message, JOptionPane.WARNING_MESSAGE,
+					toDateChooser);
 			return false;
 		}
 
 		if (!toDate.after(fromDate)) {
-			final String message = "To Date must be after From Date";
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					JOptionPane.showMessageDialog(null, message, ERROR,
-							JOptionPane.WARNING_MESSAGE);
-					toDateChooser.grabFocus();
-				}
-			});
+			String message = "To Date must be after From Date";
+			errorMessagePopup(message, JOptionPane.WARNING_MESSAGE,
+					toDateChooser);
 			return false;
 		}
 
 		if (tickerSymbol1 == null || tickerSymbol1.isEmpty()) {
-			final String message = "Stock ticker not filled in";
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					JOptionPane.showMessageDialog(null, message, ERROR,
-							JOptionPane.WARNING_MESSAGE);
-					stock1Field.grabFocus();
-				}
-			});
+			String message = "Stock ticker not filled in";
+			errorMessagePopup(message, JOptionPane.WARNING_MESSAGE, stock1Field);
 			return false;
 		}
 
 		if (tickerSymbol2 == null || tickerSymbol2.isEmpty()) {
-			final String message = "Stock ticker not filled in";
-			SwingUtilities.invokeLater(new Runnable() {
-				@Override
-				public void run() {
-					JOptionPane.showMessageDialog(null, message, ERROR,
-							JOptionPane.WARNING_MESSAGE);
-					stock2Field.grabFocus();
-				}
-			});
+			String message = "Stock ticker not filled in";
+			errorMessagePopup(message, JOptionPane.WARNING_MESSAGE, stock2Field);
 			return false;
 		}
 
 		return true;
 
+	}
+
+	private void errorMessagePopup(final String message, final int messageType,
+			final JComponent toFocus) {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				JOptionPane
+						.showMessageDialog(null, message, ERROR, messageType);
+				if (toFocus != null)
+					toFocus.grabFocus();
+			}
+		});
 	}
 
 	@Override
