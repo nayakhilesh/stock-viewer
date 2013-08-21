@@ -1,0 +1,62 @@
+<project name="stock-viewer" default="package" basedir="../..">
+
+	<property name="src.dir" location="src" />
+	<property name="lib.dir" location="lib" />
+	<property name="config.dir" location="config" />
+	<property name="dist.dir" location="dist" />
+	<property name="main.class" value="stockviewer.StockViewer" />
+
+	<target name="init">
+		<tstamp />
+	</target>
+
+	<target name="package" depends="clean,package-app" />
+
+	<target name="clean" description="clean up">
+		<delete dir="${dist.dir}" />
+	</target>
+
+	<target name="package-app" depends="init" description="create the dist folder which can be distributed">
+		<mkdir dir="${dist.dir}/build" />
+		<mkdir dir="${dist.dir}/lib" />
+		<mkdir dir="${dist.dir}/config" />
+		<mkdir dir="${dist.dir}/src" />
+
+		<copy todir="${dist.dir}/lib">
+			<fileset dir="${lib.dir}" />
+		</copy>
+		<copy todir="${dist.dir}/config">
+			<fileset dir="${config.dir}" />
+		</copy>
+		<copy todir="${dist.dir}/src">
+			<fileset dir="${src.dir}" />
+		</copy>
+
+		<path id="jarclasspath">
+			<fileset dir="${dist.dir}/lib">
+				<include name="**/*.jar" />
+			</fileset>
+			<pathelement path="${dist.dir}/config" />
+		</path>
+
+		<javac destdir="${dist.dir}/build" source="1.6" target="1.6" debug="true">
+			<src path="${dist.dir}/src/java" />
+			<classpath refid="jarclasspath" />
+		</javac>
+
+		<manifestclasspath property="jar.classpath" jarfile="${dist.dir}/stock-viewer.jar">
+			<classpath refid="jarclasspath" />
+		</manifestclasspath>
+		<jar destfile="${dist.dir}/stock-viewer.jar">
+			<fileset dir="${dist.dir}/build" />
+			<manifest>
+				<attribute name="Main-Class" value="${main.class}" />
+				<attribute name="Class-Path" value="${jar.classpath}" />
+			</manifest>
+		</jar>
+
+		<delete dir="${dist.dir}/build" />
+
+	</target>
+
+</project>
