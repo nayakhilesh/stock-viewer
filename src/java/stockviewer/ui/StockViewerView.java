@@ -182,8 +182,8 @@ public class StockViewerView implements View {
 
 	private void generateChart() {
 
-		Date fromDate = DateUtil.truncate(fromDateChooser.getDate());
-		Date toDate = DateUtil.truncate(toDateChooser.getDate());
+		Date fromDate = DateUtil.treatAsGmt(fromDateChooser.getDate());
+		Date toDate = DateUtil.treatAsGmt(toDateChooser.getDate());
 
 		String tickerSymbol1 = stock1Field.getText();
 		String tickerSymbol2 = stock2Field.getText();
