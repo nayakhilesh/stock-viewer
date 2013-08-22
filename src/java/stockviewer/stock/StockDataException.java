@@ -2,11 +2,15 @@ package stockviewer.stock;
 
 public class StockDataException extends Exception {
 
-	public StockDataException() {
+	private StockDataExceptionType type;
+
+	public StockDataException(String message, StockDataExceptionType type) {
+		super(message);
+		this.type = type;
 	}
 
-	public StockDataException(String message) {
-		super(message);
+	public StockDataExceptionType getType() {
+		return type;
 	}
 
 }
