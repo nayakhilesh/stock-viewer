@@ -15,11 +15,11 @@ public class StockAutoCompleter extends AutoCompleter {
 	private static final Logger LOG = LoggerFactory
 			.getLogger(StockAutoCompleter.class);
 
-	private StockDataSource ds;
+	private StockDataSource[] dataSources;
 
-	public StockAutoCompleter(JTextField field, StockDataSource ds) {
+	public StockAutoCompleter(JTextField field, StockDataSource... dataSources) {
 		super(field);
-		this.ds = ds;
+		this.dataSources = dataSources;
 	}
 
 	@Override
@@ -28,17 +28,32 @@ public class StockAutoCompleter extends AutoCompleter {
 		if (value.isEmpty())
 			return false;
 
-		long start, end;
-		List<StockTicker> tickers;
-		try {
-			start = System.nanoTime();
-			tickers = ds.searchTickers(value);
-			end = System.nanoTime();
-			LOG.debug("Ticker search time=" + ((end - start) / 1000000.) + "ms");
-		} catch (Exception e) {
-			LOG.error("Exception searching for tickers with query:" + value, e);
-			return false;
+		long totalStart, totalEnd;
+		List<StockTicker> tickers = null;
+
+		totalStart = System.nanoTime();
+
+		for (StockDataSource ds : dataSources) {
+			if (ds != null) {
+				try {
+					long start = System.nanoTime();
+					tickers = ds.searchTickers(value);
+					long end = System.nanoTime();
+					LOG.debug("Source:" + ds + " ticker search time="
+							+ ((end - start) / 1000000.) + "ms");
+					LOG.info("Tickers successfully found from source:" + ds);
+					break;
+				} catch (Exception e) {
+					LOG.error("Error searching for tickers in source:" + ds
+							+ " with query:" + value);
+				}
+			}
 		}
+
+		totalEnd = System.nanoTime();
+		LOG.debug("Total Ticker search time="
+				+ ((totalEnd - totalStart) / 1000000.) + "ms");
+
 		if (tickers == null || tickers.isEmpty())
 			return false;
 
