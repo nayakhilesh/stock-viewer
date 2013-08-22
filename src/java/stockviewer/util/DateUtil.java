@@ -6,8 +6,8 @@ import java.util.TimeZone;
 
 public class DateUtil {
 
-	private static Calendar cal = Calendar.getInstance();
-	private static TimeZone GMT = TimeZone.getTimeZone("GMT");
+	private static final Calendar cal = Calendar.getInstance();
+	public static final TimeZone GMT = TimeZone.getTimeZone("GMT");
 
 	static {
 		cal.setTimeZone(GMT);
