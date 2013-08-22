@@ -64,7 +64,7 @@ public class StockViewerController implements Controller {
 			if (dao == null)
 				throw sde;
 			
-			LOG.error("Error getting stock data from:" + ds);
+			LOG.info("Error getting stock data from:" + ds);
 			try {
 				LOG.info("Trying to get from DB");
 				data1 = dao.getStockData(tickerSymbol1, from, to);
