@@ -16,11 +16,14 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.glassfish.jersey.client.ClientProperties;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import stockviewer.util.DateUtil;
 
 public class YahooFinanceClient implements StockDataSource {
 
@@ -43,12 +46,16 @@ public class YahooFinanceClient implements StockDataSource {
 
 	public YahooFinanceClient() {
 		Client client = ClientBuilder.newClient();
+		client.property(ClientProperties.CONNECT_TIMEOUT, 5000);
+		client.property(ClientProperties.READ_TIMEOUT, 5000);
 		stockDataTarget = client.target(STOCK_DATA_BASE_URI).path(
 				STOCK_DATA_PATH);
 		tickerSearchTarget = client.target(TICKER_SEARCH_BASE_URI).path(
 				TICKER_SEARCH_PATH);
 		df = new SimpleDateFormat("yyyy-MM-dd");
+		df.setTimeZone(DateUtil.GMT);
 		cal = Calendar.getInstance();
+		cal.setTimeZone(DateUtil.GMT);
 	}
 
 	@Override
@@ -68,18 +75,26 @@ public class YahooFinanceClient implements StockDataSource {
 		int toDay = cal.get(Calendar.DAY_OF_MONTH);
 		int toYear = cal.get(Calendar.YEAR);
 
-		Response response = stockDataTarget.queryParam("s", tickerSymbol)
-				.queryParam("a", fromMonth).queryParam("b", fromDay)
-				.queryParam("c", fromYear).queryParam("d", toMonth)
-				.queryParam("e", toDay).queryParam("f", toYear)
-				.queryParam("g", "d").queryParam("ignore", ".csv")
-				.request(MediaType.TEXT_PLAIN_TYPE).get();
+		Response response;
+		try {
+			response = stockDataTarget.queryParam("s", tickerSymbol)
+					.queryParam("a", fromMonth).queryParam("b", fromDay)
+					.queryParam("c", fromYear).queryParam("d", toMonth)
+					.queryParam("e", toDay).queryParam("f", toYear)
+					.queryParam("g", "d").queryParam("ignore", ".csv")
+					.request(MediaType.TEXT_PLAIN_TYPE).get();
+		} catch (Exception e) {
+			LOG.error("Error during yahoo api call");
+			throw new StockDataException("Network Error",
+					StockDataExceptionType.NETWORK);
+		}
 
 		if (Response.Status.NOT_FOUND.equals(Response.Status
 				.fromStatusCode(response.getStatus()))) {
 			String message = "404: Stock " + tickerSymbol + " data not found";
 			LOG.error(message);
-			throw new StockDataException(message);
+			throw new StockDataException(message,
+					StockDataExceptionType.DATA_NOT_FOUND);
 		}
 
 		String responseCsv = response.readEntity(String.class);
@@ -87,10 +102,10 @@ public class YahooFinanceClient implements StockDataSource {
 		try {
 			return parseCsv(responseCsv);
 		} catch (Exception e) {
-			String message = "Exception parsing retrieved data for "
+			String message = "Error parsing retrieved data for "
 					+ tickerSymbol;
 			LOG.error(message, e);
-			throw new StockDataException(message);
+			throw new StockDataException(message, StockDataExceptionType.OTHER);
 		}
 	}
 
@@ -129,9 +144,9 @@ public class YahooFinanceClient implements StockDataSource {
 				list.add(stockData);
 
 			} catch (Exception e) {
-				String message = "Exception parsing stock data row:" + row;
+				String message = "Error parsing stock data row:" + row;
 				LOG.error(message, e);
-				throw new StockDataException(message);
+				throw new StockDataException(message, StockDataExceptionType.OTHER);
 			}
 
 		}
@@ -143,17 +158,25 @@ public class YahooFinanceClient implements StockDataSource {
 	public synchronized List<StockTicker> searchTickers(String query)
 			throws StockDataException {
 
-		Response response = tickerSearchTarget
-				.queryParam("query", query)
-				.queryParam("callback",
-						"YAHOO.Finance.SymbolSuggest.ssCallback")
-				.request(MediaType.APPLICATION_JSON).get();
+		Response response;
+		try {
+			response = tickerSearchTarget
+					.queryParam("query", query)
+					.queryParam("callback",
+							"YAHOO.Finance.SymbolSuggest.ssCallback")
+					.request(MediaType.APPLICATION_JSON).get();
+		} catch (Exception e) {
+			LOG.error("Error during yahoo api call");
+			throw new StockDataException("Network Error",
+					StockDataExceptionType.NETWORK);
+		}
 
 		if (Response.Status.NOT_FOUND.equals(Response.Status
 				.fromStatusCode(response.getStatus()))) {
 			String message = "404: Tickers not found for query:" + query;
 			LOG.error(message);
-			throw new StockDataException(message);
+			throw new StockDataException(message,
+					StockDataExceptionType.DATA_NOT_FOUND);
 		}
 
 		String responseString = response.readEntity(String.class);
@@ -167,10 +190,10 @@ public class YahooFinanceClient implements StockDataSource {
 				return parseJson(responseJson);
 			}
 		} catch (Exception e) {
-			String message = "Exception parsing response json when searching for tickers with query:"
+			String message = "Error parsing response json when searching for tickers with query:"
 					+ query;
 			LOG.error(message, e);
-			throw new StockDataException(message);
+			throw new StockDataException(message, StockDataExceptionType.OTHER);
 		}
 		return null;
 	}

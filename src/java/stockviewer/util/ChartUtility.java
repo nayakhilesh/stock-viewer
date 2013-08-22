@@ -40,6 +40,8 @@ public class ChartUtility {
 
 	public ChartUtility() {
 		cal = Calendar.getInstance();
+		cal.setTimeZone(DateUtil.GMT);
+		df.setTimeZone(DateUtil.GMT);
 	}
 
 	public JPanel createChart(Date from, Date to, StockInfo stock1,

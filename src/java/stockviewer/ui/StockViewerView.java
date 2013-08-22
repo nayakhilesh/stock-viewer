@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,12 +21,12 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.ws.rs.ProcessingException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import stockviewer.controller.Controller;
+import stockviewer.stock.StockDao;
 import stockviewer.stock.StockDataException;
 import stockviewer.stock.StockDataSource;
 import stockviewer.stock.StockInfo;
@@ -64,7 +65,8 @@ public class StockViewerView implements View {
 	private final JButton createButton;
 	private final InfiniteProgressPanel glassPane;
 
-	public StockViewerView(final Controller controller, StockDataSource ds) {
+	public StockViewerView(final Controller controller, StockDataSource ds,
+			final StockDao dao, final boolean shutDownDbOnExit) {
 
 		LOG.info("Initializing GUI");
 
@@ -81,6 +83,14 @@ public class StockViewerView implements View {
 		frame.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent we) {
+				if (dao != null && shutDownDbOnExit) {
+					try {
+						dao.shutDown();
+						LOG.info("DB successfully shutdown");
+					} catch (SQLException e) {
+						LOG.error("Error shutting down DB", e);
+					}
+				}
 				LOG.info("Application exiting...");
 			}
 		});
@@ -106,7 +116,7 @@ public class StockViewerView implements View {
 		JPanel stockPickerPanel = new JPanel();
 
 		stock1Field = new JTextField(STOCK_FIELD_WIDTH);
-		new StockAutoCompleter(stock1Field, ds);
+		new StockAutoCompleter(stock1Field, ds, dao);
 		decorateWithPrompt(stock1Field);
 		stockPickerPanel.add(stock1Field);
 
@@ -115,7 +125,7 @@ public class StockViewerView implements View {
 		stockPickerPanel.add(colorChooser1);
 
 		stock2Field = new JTextField(STOCK_FIELD_WIDTH);
-		new StockAutoCompleter(stock2Field, ds);
+		new StockAutoCompleter(stock2Field, ds, dao);
 		decorateWithPrompt(stock2Field);
 		stockPickerPanel.add(stock2Field);
 
@@ -172,8 +182,8 @@ public class StockViewerView implements View {
 
 	private void generateChart() {
 
-		Date fromDate = DateUtil.truncate(fromDateChooser.getDate());
-		Date toDate = DateUtil.truncate(toDateChooser.getDate());
+		Date fromDate = DateUtil.treatAsGmt(fromDateChooser.getDate());
+		Date toDate = DateUtil.treatAsGmt(toDateChooser.getDate());
 
 		String tickerSymbol1 = stock1Field.getText();
 		String tickerSymbol2 = stock2Field.getText();
@@ -184,17 +194,33 @@ public class StockViewerView implements View {
 						tickerSymbol2);
 			}
 		} catch (StockDataException e) {
-			String message = e.getLocalizedMessage()
-					+ ", check ticker validity";
-			errorMessagePopup(message, JOptionPane.ERROR_MESSAGE, null);
-		} catch (ProcessingException e) {
-			String message = "Error, check network connectivity";
-			LOG.error(message, e);
-			errorMessagePopup(message, JOptionPane.ERROR_MESSAGE, null);
+
+			if (e.getType() != null) {
+				String message;
+				switch (e.getType()) {
+				case NETWORK:
+					message = "Error, check network connectivity";
+					LOG.error(message, e);
+					errorMessagePopup(message, JOptionPane.ERROR_MESSAGE, null);
+					break;
+				case DATA_NOT_FOUND:
+					message = e.getLocalizedMessage()
+							+ ", check ticker validity";
+					errorMessagePopup(message, JOptionPane.ERROR_MESSAGE, null);
+					break;
+				case OTHER:
+					defaultErrorMessagePopup(e);
+					break;
+				default:
+					defaultErrorMessagePopup(e);
+					break;
+				}
+			} else {
+				defaultErrorMessagePopup(e);
+			}
+
 		} catch (Exception e) {
-			String message = "Error creating chart";
-			LOG.error(message, e);
-			errorMessagePopup(message, JOptionPane.ERROR_MESSAGE, null);
+			defaultErrorMessagePopup(e);
 		} finally {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override
@@ -205,6 +231,12 @@ public class StockViewerView implements View {
 			});
 		}
 
+	}
+
+	private void defaultErrorMessagePopup(Exception e) {
+		String message = "Error creating chart";
+		LOG.error(message, e);
+		errorMessagePopup(message, JOptionPane.ERROR_MESSAGE, null);
 	}
 
 	private boolean isValid(Date fromDate, Date toDate, String tickerSymbol1,

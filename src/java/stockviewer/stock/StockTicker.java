@@ -51,7 +51,22 @@ public class StockTicker {
 
 	@Override
 	public String toString() {
-		return symbol + ", " + name + "\t" + exchange + ", " + type;
+		StringBuffer sb = new StringBuffer();
+		if (symbol != null)
+			sb.append(symbol);
+		if (name != null) {
+			sb.append("\t");
+			sb.append(name);
+		}
+		if (exchange != null) {
+			sb.append("\t");
+			sb.append(exchange);
+		}
+		if (type != null) {
+			sb.append("\t");
+			sb.append(type);
+		}
+		return sb.toString();
 	}
 
 }
