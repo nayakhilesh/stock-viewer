@@ -69,6 +69,7 @@ public class StockViewerController implements Controller {
 				LOG.info("Trying to get from DB");
 				data1 = dao.getStockData(tickerSymbol1, from, to);
 				data2 = dao.getStockData(tickerSymbol2, from, to);
+				LOG.info("Successfully retrieved data from DB");
 			} catch (Exception e) {
 				LOG.error("Error retrieving stock info from DB", e);
 			}
