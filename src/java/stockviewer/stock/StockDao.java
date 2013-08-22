@@ -200,7 +200,7 @@ public class StockDao implements StockDataSource {
 				conn.commit();
 			}
 
-			LOG.info("Finished Committing to DB");
+			LOG.info("Finished Committing to DB:" + tickerSymbol);
 		} catch (SQLException e) {
 			DBUtil.rollback(conn);
 			throw e;
