@@ -55,7 +55,7 @@ public class StockDao implements StockDataSource {
 			+ "VOLUME, "
 			+ "ADJ_CLOSE ) values (?, ?, ?, ?, ?, ?, ?, ?)";
 	
-	private static final String STOCK_DATA_CHECK = "SELECT COUNT(*) AS COUNT FROM STOCK_DATA "
+	private static final String STOCK_DATA_CHECK = "SELECT TICKER_SYMBOL FROM STOCK_DATA "
 			+ "WHERE TICKER_SYMBOL = ? "
 			+ "AND DATE = ? ";
 	
@@ -137,7 +137,8 @@ public class StockDao implements StockDataSource {
 			}
 
 		} catch (SQLException e) {
-			throw new StockDataException(e.getLocalizedMessage(), StockDataExceptionType.OTHER);
+			throw new StockDataException(e.getLocalizedMessage(),
+					StockDataExceptionType.OTHER);
 		} finally {
 			DBUtil.close(rset);
 			DBUtil.close(pstmt);
@@ -157,7 +158,7 @@ public class StockDao implements StockDataSource {
 		int count = 0;
 
 		// upsert not used since it isn't standardized across db's
-		
+
 		try {
 			conn = getConnection();
 			pstmt = conn.prepareStatement(STOCK_DATA_INSERT);
@@ -167,14 +168,14 @@ public class StockDao implements StockDataSource {
 
 				java.sql.Date sqlDate = new java.sql.Date(data.getDate()
 						.getTime());
-				
+
 				pstmtCheck.setString(1, tickerSymbol);
 				pstmtCheck.setDate(2, sqlDate, cal);
 				rset = pstmtCheck.executeQuery();
-				
-				if (rset.next() && (rset.getInt("COUNT") > 0))
+
+				if (rset.next())
 					continue;
-				
+
 				pstmt.setString(1, tickerSymbol);
 				pstmt.setDate(2, sqlDate, cal);
 				pstmt.setDouble(3, data.getOpen());
@@ -237,7 +238,8 @@ public class StockDao implements StockDataSource {
 			}
 
 		} catch (SQLException e) {
-			throw new StockDataException(e.getLocalizedMessage(), StockDataExceptionType.OTHER);
+			throw new StockDataException(e.getLocalizedMessage(),
+					StockDataExceptionType.OTHER);
 		} finally {
 			DBUtil.close(rset);
 			DBUtil.close(pstmt);
